@@ -1,6 +1,39 @@
 import torch
 import torch.nn as nn
 import torch.functional as F
+class SelfAttention(nn.Module):
+    def __init__(self,embed_dim,num_heads,attn_p=0.0,proj_p=0.0,bias=False):
+        super().__init__()
+        self.embed_dim=embed_dim
+        self.num_heads=num_heads
+        self.head_dim=embed_dim//num_heads
+        self.query=nn.Linear(embed_dim,embed_dim,bias=bias)
+        self.key=nn.Linear(embed_dim,embed_dim,bias=bias)
+        self.value=nn.Linear(embed_dim,embed_dim,bias=bias)
+        self.attn_drop=nn.Dropout(attn_p)
+        self.proj=nn.Linear(embed_dim,embed_dim,bias=bias) # Layer which help heads to know each others
+        self.proj_drop=nn.Dropout(proj_p)
+    def forward(self,input,attention_mask):
+        batch_size,seq_len,embed_dim=input.shape
+        q=self.query(input).reshape(batch_size,seq_len,self.num_heads,self.head_dim).transpose(1,2)
+        k=self.key(input).reshape(batch_size,seq_len,self.num_heads,self.head_dim).transpose(1,2)
+        v=self.value(input).reshape(batch_size,seq_len,self.num_heads,self.head_dim).transpose(1,2)
+        attention=(q @ k.transpose(-2,-1))/self.head_dim**0.5
+        # Do masking
+        if attention_mask is not None:
+            attention_mask=attention_mask.unsqueeze(1).unsqueeze(1).repeat(1,1,seq_len,1) # (3, 1, 5, 5) compare to (3, 3, 5, 5) - (batch_size, num_heads, seq_len, seq_len), head dimension will be automatically broadcast from 1 to 3
+                                                                                          # We can even do not use repeat() here since every dimension except the last one will be automatically bradcast
+            attention=attention.masked_fill(~attention_mask,float('-inf'))
+            '''print(attention)
+            print(attention.shape)'''
+        attention=attention.softmax(axis=-1)
+        attention=self.attn_drop(attention)
+        output=attention@v
+        output=output.transpose(1,2)
+        output=output.reshape(batch_size,seq_len,embed_dim)
+        output=self.proj(output)
+        output=self.proj_drop(output)
+        return output
 class SelfAttentionEncoder(nn.Module):
     def __init__(self,embed_dim,num_heads,attn_p=0.0,proj_p=0.0,bias=False): # attn stand for attention, is dropout rate
                                                                  # proj stand for projection, is dropout rate in layer which help heads to know each others
@@ -88,5 +121,19 @@ def test_02():
     attention=SelfAttentionEncoder(embed_dim=128,num_heads=2)
     rand=attention(rand)
     print(rand.shape)
+def test_03():
+    seq_lens=[3,5,4]
+    batch_size=len(seq_lens)
+    max_len=max(seq_lens)
+    embed_dim=9
+    num_heads=3
+    attention=SelfAttention(embed_dim=embed_dim,num_heads=num_heads)
+    rand=torch.rand(batch_size,max_len,embed_dim)
+    print(rand.shape)
+    '''mask=torch.nn.utils.rnn.pad_sequence([torch.ones(l) for l in seq_lens],batch_first=True,padding_value=0).bool()'''
+    mask=[torch.ones(l) for l in seq_lens]
+    mask=torch.nn.utils.rnn.pad_sequence(mask,batch_first=True,padding_value=0) # batch_first means to merge existed tensors in to a single tensor of shape (batch_size, max_len)
+    mask=mask.bool()
+    output=attention(rand,mask)
 if __name__=='__main__':
-    test_02()
+    test_03()
