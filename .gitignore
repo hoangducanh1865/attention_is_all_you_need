@@ -209,3 +209,12 @@ __marimo__/
 .DS_Store
 debug/
 tmp/
+
+data/datasets/raw_datasets/english2french/*
+!data/datasets/raw_datasets/english2french/.gitkeep
+
+data/datasets/preprocessed_datasets/english2french/hf_all_data/*
+!data/datasets/preprocessed_datasets/english2french/hf_all_data/.gitkeep
+
+data/datasets/preprocessed_datasets/english2french/hf_tokenized/*
+!data/datasets/preprocessed_datasets/english2french/hf_tokenized/.gitkeep
