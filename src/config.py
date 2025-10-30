@@ -12,8 +12,8 @@ class Config:
 class TransformerConfig:
     embed_dim: int=512
     num_heads: int=8 # Number of attention heads
-    attn_p: float=0.0 # Attention dropout percentage
-    hid_p: float=0.0 # Hidden dropout percentage
+    attn_drop: float=0.0 # Attention dropout percentage
+    hid_drop: float=0.0 # Hidden dropout percentage
     mlp_ratio: int=4
     encoder_depth: int=6
     decoder_depth: int=6
