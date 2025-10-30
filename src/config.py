@@ -10,15 +10,15 @@ class Config:
     PRETRAINED_ENGLISH_TOKENIZER_NAME='google-bert/bert-base-uncased'
 @dataclass
 class TransformerConfig:
-    embedding_dimension: int=512
-    num_attention_heads: int=8
-    attention_droput: float=0.0
-    hidden_dropout: float=0.0
+    embed_dim: int=512
+    num_heads: int=8 # Number of attention heads
+    attn_p: float=0.0 # Attention dropout percentage
+    hid_p: float=0.0 # Hidden dropout percentage
     mlp_ratio: int=4
     encoder_depth: int=6
     decoder_depth: int=6
     src_vocab_size: int=30522
     tgt_vocab_size: int=32000
-    max_src_len: int=512
-    max_tgt_len: int=512
+    src_max_len: int=512
+    tgt_max_len: int=512
     learn_pos_embed: bool=False

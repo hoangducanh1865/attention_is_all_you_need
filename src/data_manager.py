@@ -84,17 +84,17 @@ class DataManager:
             
             # @QUESTION: why do we need to use clone() here?
             # @ANSWER: We need to use clone() here since PyTorch creates a view that shares the same memory as the original tensor -> both new tensors point to the same data in memory -> during backpropagation, gradients might accumulate incorrectly; and if we modify one tensor, if will affect the other
-            input_tgt_padded_ids=tgt_padded_ids[:,:-1].clone() # First dimension is batch_size, in second dimension
-            output_tgt_padded_ids=tgt_padded_ids[:,1:].clone()
-            output_tgt_padded_ids[output_tgt_padded_ids==tgt_pad_token]=-100 # Assign -100 for padding token so that when calculating the CrossEntropyLoss, any sample which has label (use the word "label" here since this output_tgt_padded_ids should be the output of the model) -100 will be automatically ignored
-            input_tgt_pad_mask=(input_tgt_padded_ids!=tgt_pad_token)
-            '''output_tgt_padded_ids=(output_tgt_padded_ids!=tgt_pad_token)''' # We do not need this padding mask
+            tgt_input_padded_ids=tgt_padded_ids[:,:-1].clone() # First dimension is batch_size, in second dimension
+            tgt_output_padded_ids=tgt_padded_ids[:,1:].clone()
+            tgt_output_padded_ids[tgt_output_padded_ids==tgt_pad_token]=-100 # Assign -100 for padding token so that when calculating the CrossEntropyLoss, any sample which has label (use the word "label" here since this tgt_output_padded_ids should be the output of the model) -100 will be automatically ignored
+            input_tgt_pad_mask=(tgt_input_padded_ids!=tgt_pad_token)
+            '''tgt_output_padded_ids=(tgt_output_padded_ids!=tgt_pad_token)''' # We do not need this padding mask
             batch={
                 'src_input_ids':src_padded_ids,
                 'src_pad_mask':src_pad_mask,
-                'tgt_input_ids':input_tgt_padded_ids,
+                'tgt_input_ids':tgt_input_padded_ids,
                 'tgt_pad_mask':input_tgt_pad_mask,
-                'tgt_output_ids':output_tgt_padded_ids
+                'tgt_output_ids':tgt_output_padded_ids
             }
             return batch
         return _collate_fn
