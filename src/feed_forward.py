@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F 
-from src.config import TransformerConfig
+from src.config import Config
 class FeedForward(nn.Module):
     def __init__(self,config):
         super().__init__()
@@ -19,7 +19,7 @@ class FeedForward(nn.Module):
         x=self.output_drop(x)
         return x
 def main():
-    config=TransformerConfig()
+    config=Config.transformer_config
     ff=FeedForward(config)
     rand_data=torch.rand(2,32,512)
     ff(rand_data)

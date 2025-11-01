@@ -6,6 +6,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from src.tokenizer import FrenchTokenizer
 from src.config import Config
+from src.utils import translation_collator
+from src.utils import Utils
 class DataManager:
     def __init__(self,datasets_dir,save_raw_dir,save_tok_dir,vocab_path,english_tokenizer_name):
         self.datasets_dir=datasets_dir
@@ -67,37 +69,11 @@ class DataManager:
         dataset=load_from_disk(self.save_tok_dir)
         src_tokenizer=AutoTokenizer.from_pretrained(self.english_tokenizer_name)
         tgt_tokenizer=FrenchTokenizer(vocab_path=self.vocab_path)
-        collate_fn=self.translation_collator(src_tokenizer,tgt_tokenizer)
+        collate_fn=translation_collator(src_tokenizer,tgt_tokenizer)
         data_loader=DataLoader(dataset=dataset['train'],batch_size=128,collate_fn=collate_fn,shuffle=True,num_workers=4)
         for samples in tqdm(data_loader):
             pass
         return data_loader
-    def translation_collator(self,src_tokenizer,tgt_tokenizer):
-        def _collate_fn(batch):
-            src_ids=[torch.tensor(i['src_ids']) for i in batch]
-            tgt_ids=[torch.tensor(i['tgt_ids']) for i in batch]
-            src_pad_token=src_tokenizer.pad_token_id # pad_token_id is an attribute of AutoTokenizer
-            src_padded_ids=torch.nn.utils.rnn.pad_sequence(src_ids,batch_first=True,padding_value=src_pad_token)
-            src_pad_mask=(src_padded_ids!=src_pad_token)
-            tgt_pad_token=tgt_tokenizer.special_tokens['[PAD]']
-            tgt_padded_ids=torch.nn.utils.rnn.pad_sequence(tgt_ids,batch_first=True,padding_value=tgt_pad_token)
-            
-            # @QUESTION: why do we need to use clone() here?
-            # @ANSWER: We need to use clone() here since PyTorch creates a view that shares the same memory as the original tensor -> both new tensors point to the same data in memory -> during backpropagation, gradients might accumulate incorrectly; and if we modify one tensor, if will affect the other
-            tgt_input_padded_ids=tgt_padded_ids[:,:-1].clone() # First dimension is batch_size, in second dimension
-            tgt_output_padded_ids=tgt_padded_ids[:,1:].clone()
-            tgt_output_padded_ids[tgt_output_padded_ids==tgt_pad_token]=-100 # Assign -100 for padding token so that when calculating the CrossEntropyLoss, any sample which has label (use the word "label" here since this tgt_output_padded_ids should be the output of the model) -100 will be automatically ignored
-            input_tgt_pad_mask=(tgt_input_padded_ids!=tgt_pad_token)
-            '''tgt_output_padded_ids=(tgt_output_padded_ids!=tgt_pad_token)''' # We do not need this padding mask
-            batch={
-                'src_input_ids':src_padded_ids,
-                'src_pad_mask':src_pad_mask,
-                'tgt_input_ids':tgt_input_padded_ids,
-                'tgt_pad_mask':input_tgt_pad_mask,
-                'tgt_output_ids':tgt_output_padded_ids
-            }
-            return batch
-        return _collate_fn
 def main():
     datasets_dir=Config.DATA_DIR
     save_raw_dir=Config.SAVE_RAW_DIR
@@ -106,10 +82,10 @@ def main():
     english_tokenizer_name=Config.PRETRAINED_ENGLISH_TOKENIZER_NAME
     data_manager=DataManager(datasets_dir,save_raw_dir,save_tok_dir,vocab_path,english_tokenizer_name)
     '''data_manager.build_english2french_dataset()'''
-    data_manager.tokenize_english2french_dataset(num_workers=4,
+    '''data_manager.tokenize_english2french_dataset(num_workers=4,
                                                  truncate=True,
                                                  max_length=512,
-                                                 min_length=5)
-    '''train_data_loader=data_manager.prepare_padded_and_masked_english2french_dataset()'''
+                                                 min_length=5)'''
+    train_data_loader=data_manager.prepare_padded_and_masked_english2french_dataset()
 if __name__=='__main__':
     main()

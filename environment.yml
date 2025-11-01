@@ -6,3 +6,6 @@ dependencies:
   - datasets
   - transformers
   - matplotlib
+  - pip
+  - pip:
+      - accelerate

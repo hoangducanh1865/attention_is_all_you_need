@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from src.config import Config
 from src.config import TransformerConfig
 class Attention(nn.Module):
     def __init__(self,config):
@@ -43,7 +44,7 @@ class Attention(nn.Module):
         output=self.out_proj(output)
         return output
 def main():
-    config=TransformerConfig()
+    config=Config.transformer_config
     attn=Attention(config)
     rand_eng=torch.rand(2,35,512)
     rand_fre=torch.rand(2,63,512)
