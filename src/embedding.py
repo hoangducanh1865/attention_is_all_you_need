@@ -16,8 +16,15 @@ class PositionalEncoding(nn.Module):
         
         # @QUESTION: why did original paper use this formula to represent the positional information between tokens?
         # @QUESTION: why use 10000 here? why not an another number?
-        encodings[:,0::2]=torch.sin(position_idx/10000**(embed_skip_dim/self.embed_dim))
-        encodings[:,1::2]=torch.cos(position_idx/10000**(embed_skip_dim/self.embed_dim))
+        encodings[:,0::2]=torch.sin(position_idx/10000**(embed_skip_dim/self.embed_dim)) # encodings[:, ...] means all rows -> apply to every position
+                                                                                         # 0::2 means start:stop:step -> start at index 0, go to the end, and jump by 2 -> all even columns
+        encodings[:,1::2]=torch.cos(position_idx/10000**(embed_skip_dim/self.embed_dim)) # encodings[:, ...] means all rows -> apply to every position
+                                                                                         # 1::2 means start:stop:step -> start at index 1, go to the end, and jump by 2 -> all odd columns
+        """
+        Or we can say, for every position:
+            - put sine values into even dimensions
+            - put cosine values into odd dimensions
+        """
         
         encodings=nn.Parameter(encodings,requires_grad=self.require_grads)
         return encodings
