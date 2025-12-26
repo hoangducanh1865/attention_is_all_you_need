@@ -31,6 +31,7 @@ class Attention(nn.Module):
             if attention_mask is not None:
                 attention_mask=attention_mask.bool()
                 attention_mask=attention_mask.unsqueeze(1).unsqueeze(1).repeat(1,1,tgt_len,1)
+                
         # Use flash attention via torch formula
         attention_output=F.scaled_dot_product_attention(q,k,v,
                                                         attn_mask=attention_mask,
